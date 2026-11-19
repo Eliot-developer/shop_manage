@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#a3153f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="مدیریت فروشگاه">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>مدیریت فروشگاه</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#fdf3f5;--card:#fff;--tx:#2b1418;--mut:#805b63;--bd:#f1d4da;--ac:#a3153f;--acx:#fff;--red:#d11a2a;--grn:#15803d;--warn:#fff0c7;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b0f12;--card:#281519;--tx:#f8e9ec;--mut:#c49ca4;--bd:#472830;--ac:#fb7185;--acx:#2c0a13;--red:#ff6b6b;--grn:#4ade80;--warn:#4a3410;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b0f12;--card:#281519;--tx:#f8e9ec;--mut:#c49ca4;--bd:#472830;--ac:#fb7185;--acx:#2c0a13;--red:#ff6b6b;--grn:#4ade80;--warn:#4a3410;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;font-size:15px;line-height:1.7}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--card);border-bottom:1px solid var(--bd);z-index:5;padding:8px 12px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--card);z-index:10}
+.top{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:18px;margin:0;color:var(--ac)}
+header{border-bottom:2px solid var(--ac)}
+nav{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px}
+nav button{white-space:nowrap;border:1px solid var(--bd);background:transparent;color:var(--tx);padding:5px 12px;border-radius:20px;font:inherit;cursor:pointer}
+nav button.on{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+main{max-width:980px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
+.card h2{font-size:16px;margin:0 0 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 12px}
+.stat small{color:var(--mut);display:block}
+.stat b{font-size:18px}
+.pos{color:var(--grn)}.neg{color:var(--red)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.row label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);flex:1 1 120px}
+input,select{font:inherit;padding:6px 8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);width:100%}
+button.b{font:inherit;background:var(--ac);color:var(--acx);border:0;border-radius:8px;padding:7px 16px;cursor:pointer}
+button.g{font:inherit;background:transparent;color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:4px 10px;cursor:pointer}
+button.x{background:transparent;border:0;color:var(--red);cursor:pointer;font:inherit}
+.sc{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:480px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{color:var(--mut);font-weight:600;font-size:13px}
+tr.low td{background:var(--warn)}
+td input{min-width:70px;padding:3px 6px}
+.empty{color:var(--mut);padding:8px}
+.mut{color:var(--mut)}
+#toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:8px 16px;border-radius:20px;display:none;z-index:20}
+</style>
+</head>
+<body>
+<header>
+ <div class="top">
+  <h1>مدیریت فروشگاه</h1>
+  <div class="row" style="align-items:center">
+   <select id="mon" style="width:auto" onchange="M=this.value;render()"></select>
+   <button class="g" id="thm" onclick="toggleTheme()" title="تغییر تم">🌙</button>
+   <button class="g" onclick="exp()">پشتیبان‌گیری</button>
+   <button class="g" onclick="$('imp').click()">بازیابی</button>
+   <input type="file" id="imp" accept=".json" style="display:none" onchange="imp(this)">
+  </div>
+ </div>
+ <nav id="nav"></nav>
+</header>
+<main id="v"></main>
+<div id="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+const E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const fmt=n=>Math.round(+n||0).toLocaleString('fa-IR');
+const today=new Date().toISOString().slice(0,10);
+// Persian (Jalali) calendar helpers. Dates are stored internally as ISO/Gregorian
+// so existing saved data remains compatible, but every date shown to the user is Jalali.
+const j2g=(jy,jm,jd)=>{
+  let y=jy-979,m=jm-1,d=jd-1;
+  let days=365*y+Math.floor(y/33)*8+Math.floor((y%33+3)/4);
+  for(let i=0;i<m;i++) days+=i<6?31:30;
+  days+=d;
+  let g=days+79;
+  let gy=1600+400*Math.floor(g/146097);
+  g%=146097;
+  let leap=true;
+  if(g>=36525){
+    g--;
+    gy+=100*Math.floor(g/36524);
+    g%=36524;
+    if(g>=365) g++;
+    else leap=false;
+  }
+  gy+=4*Math.floor(g/1461);
+  g%=1461;
+  if(g>=366){
+    leap=false;
+    g--;
+    gy+=Math.floor(g/365);
+    g%=365;
+  }
+  let gd=g+1;
+  const md=[31,leap?29:28,31,30,31,30,31,31,30,31,30,31];
+  let gm=0;
+  while(gd>md[gm]) gd-=md[gm++];
+  return `${gy}-${String(gm+1).padStart(2,'0')}-${String(gd).padStart(2,'0')}`;
+};
+const g2j=(gy,gm,gd)=>{
+  let y=gy-1600,m=gm-1,d=gd-1;
+  let days=365*y+Math.floor((y+3)/4)-Math.floor((y+99)/100)+Math.floor((y+399)/400);
+  const gmd=[31,28,31,30,31,30,31,31,30,31,30,31];
+  for(let i=0;i<m;i++) days+=gmd[i];
+  if(m>1 && (gy%4===0&&(gy%100!==0||gy%400===0))) days++;
+  days+=d;
+  let j=days-79;
+  let jy=979+33*Math.floor(j/12053);
+  j%=12053;
+  jy+=4*Math.floor(j/1461);
+  j%=1461;
+  if(j>=366){
+    jy+=Math.floor((j-1)/365);
+    j=(j-1)%365;
+  }
+  let jm,jd;
+  if(j<186){jm=1+Math.floor(j/31);jd=1+(j%31)}
+  else {jm=7+Math.floor((j-186)/30);jd=1+((j-186)%30)}
+  return `${jy}-${String(jm).padStart(2,'0')}-${String(jd).padStart(2,'0')}`;
+};
+const jp=d=>{
+  const [y,m,day]=d.split('-').map(Number);
+  return `${y}/${m.toString().padStart(2,'0')}/${day.toString().padStart(2,'0')}`;
+};
+const pdDigits=s=>String(s).replace(/[۰-۹]/g,c=>"۰۱۲۳۴۵۶۷۸۹".indexOf(c)).replace(/[٠-٩]/g,c=>"٠١٢٣٤٥٦٧٨٩".indexOf(c));
+const gd=id=>{
+  const raw=pdDigits($(id).value).trim().replace(/[-.]/g,'/');
+  const a=raw.split('/').map(Number);
+  if(a.length!==3 || a.some(n=>!Number.isFinite(n))) return '';
+  const g=j2g(a[0],a[1],a[2]);
+  return g;
+};
+const pj=d=>jp(g2j(...d.split('-').map(Number)));
+
+const jd=d=>new Date(d+'T12:00:00').toLocaleDateString('fa-IR-u-ca-persian');
+const jm=d=>{const p=new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn',{year:'numeric',month:'2-digit'}).formatToParts(new Date(d+'T12:00:00'));const g=t=>(p.find(x=>x.type===t)||{}).value;return (g('year')||g('relatedYear'))+'/'+g('month')};
+const ml=d=>new Date(d+'T12:00:00').toLocaleDateString('fa-IR-u-ca-persian',{month:'long',year:'numeric'});
+const KEY='shop-v1';
+let S={products:[],sales:[],purchases:[],suppliers:[],payments:[],expenses:[]};
+try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+let T='dash',M=jm(today);
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const toast=m=>{const t=$('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2200)};
+const P=id=>S.products.find(p=>p.id===id);
+const inM=r=>M==='all'||jm(r.date)===M;
+const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+const opts=(l,v='id',n='name')=>l.map(x=>`<option value="${x[v]}">${E(x[n])}</option>`).join('');
+const cls=n=>n>=0?'pos':'neg';
+const tabs=[['dash','داشبورد'],['sales','فروش'],['buys','خرید'],['stock','موجودی کالا'],['sup','فروشندگان و پرداختی'],['pl','سود و زیان']];
+
+function months(){const m={};[...S.sales,...S.purchases,...S.expenses,...S.payments].forEach(r=>m[jm(r.date)]=ml(r.date));m[jm(today)]=ml(today);return Object.entries(m).sort((a,b)=>b[0]<a[0]?-1:1)}
+function head(){
+ $('nav').innerHTML=tabs.map(t=>`<button class="${T===t[0]?'on':''}" onclick="T='${t[0]}';render()">${t[1]}</button>`).join('');
+ $('mon').innerHTML='<option value="all">همه زمان‌ها</option>'+months().map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('');
+ $('mon').value=M;
+}
+function render(){head();$('v').innerHTML=({dash,sales,buys,stock,sup,pl})[T]()}
+const low=()=>S.products.filter(p=>p.stock<=p.min);
+const owed=s=>sum(S.purchases.filter(x=>x.sid===s.id),x=>x.qty*x.cost)-sum(S.payments.filter(x=>x.sid===s.id),x=>x.amount);
+function calc(){
+ const sl=S.sales.filter(inM),rev=sum(sl,x=>x.qty*x.price),cogs=sum(sl,x=>x.qty*x.cost),ex=sum(S.expenses.filter(inM),x=>x.amount);
+ return{sl,rev,cogs,gross:rev-cogs,ex,net:rev-cogs-ex,buy:sum(S.purchases.filter(inM),x=>x.qty*x.cost)};
+}
+function tbl(h,rows){return rows.length?`<div class="sc"><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.join('')}</table></div>`:'<div class="empty">هنوز چیزی ثبت نشده.</div>'}
+const st=(l,v,c='')=>`<div class="stat"><small>${l}</small><b class="${c}">${fmt(v)}</b> <small style="display:inline">تومان</small></div>`;
+
+function dash(){
+ const c=calc(),debt=sum(S.suppliers,owed),lw=low();
+ return `<div class="grid">${st('فروش',c.rev)}${st('سود ناخالص',c.gross,cls(c.gross))}${st('هزینه‌ها',c.ex)}${st('سود خالص',c.net,cls(c.net))}${st('خرید',c.buy)}${st('بدهی به فروشنده‌ها',debt,debt>0?'neg':'')}</div>
+ <div class="card"><h2>⚠️ در حال تمام شدن (${fmt(lw.length)} کالا)</h2>${tbl(['کالا','موجودی','حداقل'],lw.map(p=>`<tr><td>${E(p.name)}</td><td class="neg">${fmt(p.stock)}</td><td>${fmt(p.min)}</td></tr>`))}</div>
+ ${S.products.length?'':'<div class="card">برای شروع، از تب «موجودی کالا» کالاهای مغازه رو اضافه کن، بعد خرید و فروش ثبت کن.</div>'}`;
+}
+
+function sales(){
+ const c=calc(),days={};
+ c.sl.forEach(x=>{const d=days[x.date]=days[x.date]||{n:0,r:0,p:0};d.n+=x.qty;d.r+=x.qty*x.price;d.p+=x.qty*(x.price-x.cost)});
+ const dr=Object.entries(days).sort((a,b)=>a[0]<b[0]?1:-1);
+ return `<div class="card"><h2>ثبت فروش</h2><div class="row">
+ <label>تاریخ<input type="text" id="s-d" inputmode="numeric" placeholder="۱۴۰۵/۰۸/۲۸" value="${pj(today)}"></label>
+ <label>کالا<select id="s-c" onchange="const p=P(this.value);$('s-p').value=p?p.price:''"><option value="">انتخاب...</option>${opts(S.products)}</select></label>
+ <label>تعداد<input type="number" id="s-q" value="1" min="1"></label>
+ <label>قیمت واحد<input type="number" id="s-p"></label>
+ <button class="b" onclick="addSale()">ثبت</button></div></div>
+ <div class="grid">${st('جمع فروش',c.rev)}${st('سود فروش',c.gross,cls(c.gross))}</div>
+ <div class="card"><h2>فروش روزانه</h2>${tbl(['تاریخ','تعداد','فروش','سود'],dr.map(([d,v])=>`<tr><td>${jd(d)}</td><td>${fmt(v.n)}</td><td>${fmt(v.r)}</td><td class="${cls(v.p)}">${fmt(v.p)}</td></tr>`))}</div>
+ <div class="card"><h2>لیست فروش</h2>${tbl(['تاریخ','کالا','تعداد','قیمت','جمع',''],[...c.sl].reverse().map(x=>`<tr><td>${jd(x.date)}</td><td>${E(x.name)}</td><td>${fmt(x.qty)}</td><td>${fmt(x.price)}</td><td>${fmt(x.qty*x.price)}</td><td><button class="x" onclick="del('sales','${x.id}')">حذف</button></td></tr>`))}</div>`;
+}
+function addSale(){
+ const p=P($('s-c').value),q=+$('s-q').value,pr=+$('s-p').value,d=gd('s-d');
+ if(!p||!(q>0)||!(pr>=0)||!d)return toast('تاریخ شمسی، کالا، تعداد و قیمت رو کامل وارد کن');
+ if(q>p.stock&&!confirm('موجودی کافی نیست ('+fmt(p.stock)+' عدد). ادامه می‌دی؟'))return;
+ p.stock-=q;S.sales.push({id:uid(),date:d,pid:p.id,name:p.name,qty:q,price:pr,cost:p.cost});save();render();toast('فروش ثبت شد');
+}
+
+function buys(){
+ const l=S.purchases.filter(inM);
+ return `<div class="card"><h2>ثبت خرید</h2><div class="row">
+ <label>تاریخ<input type="text" id="b-d" inputmode="numeric" placeholder="۱۴۰۵/۰۸/۲۸" value="${pj(today)}"></label>
+ <label>کالا<select id="b-c" onchange="const p=P(this.value);$('b-p').value=p?p.cost:''"><option value="">انتخاب...</option>${opts(S.products)}</select></label>
+ <label>تعداد<input type="number" id="b-q" value="1" min="1"></label>
+ <label>قیمت خرید واحد<input type="number" id="b-p"></label>
+ <label>فروشنده<select id="b-s"><option value="">— بدون فروشنده —</option>${opts(S.suppliers)}</select></label>
+ <label>پرداخت‌شده<input type="number" id="b-m" value="0"></label>
+ <button class="b" onclick="addBuy()">ثبت</button></div></div>
+ <div class="grid">${st('جمع خرید',sum(l,x=>x.qty*x.cost))}</div>
+ <div class="card"><h2>لیست خرید</h2>${tbl(['تاریخ','کالا','تعداد','قیمت','جمع','فروشنده',''],[...l].reverse().map(x=>`<tr><td>${jd(x.date)}</td><td>${E(x.name)}</td><td>${fmt(x.qty)}</td><td>${fmt(x.cost)}</td><td>${fmt(x.qty*x.cost)}</td><td>${E(x.sname||'-')}</td><td><button class="x" onclick="del('purchases','${x.id}')">حذف</button></td></tr>`))}</div>`;
+}
+function addBuy(){
+ const p=P($('b-c').value),q=+$('b-q').value,c=+$('b-p').value,d=gd('b-d'),s=S.suppliers.find(x=>x.id===$('b-s').value),m=+$('b-m').value||0;
+ if(!p||!(q>0)||!(c>=0)||!d)return toast('تاریخ شمسی، کالا، تعداد و قیمت رو کامل وارد کن');
+ const id=uid();p.stock+=q;p.cost=c;
+ S.purchases.push({id,date:d,pid:p.id,name:p.name,qty:q,cost:c,sid:s?s.id:'',sname:s?s.name:''});
+ if(s&&m>0)S.payments.push({id:uid(),date:d,sid:s.id,sname:s.name,amount:m,note:'پرداخت هنگام خرید',bid:id});
+ save();render();toast('خرید ثبت شد');
+}
+
+function stock(){
+ const lw=low().length;
+ return `<div class="card"><h2>افزودن کالا</h2><div class="row">
+ <label>نام کالا<input id="p-n" placeholder="مثلاً مانتو سایز ۴۰"></label>
+ <label>قیمت خرید<input type="number" id="p-c"></label>
+ <label>قیمت فروش<input type="number" id="p-p"></label>
+ <label>موجودی<input type="number" id="p-s" value="0"></label>
+ <label>حداقل موجودی (هشدار)<input type="number" id="p-m" value="2"></label>
+ <button class="b" onclick="addProd()">افزودن</button></div></div>
+ <div class="card"><h2>موجودی کالاها ${lw?`<span class="neg">— ${fmt(lw)} مورد رو به اتمام</span>`:''}</h2>
+ ${tbl(['کالا','قیمت خرید','قیمت فروش','موجودی','حداقل','ارزش موجودی',''],S.products.map(p=>`<tr class="${p.stock<=p.min?'low':''}"><td>${E(p.name)}</td>
+ <td><input type="number" value="${p.cost}" onchange="upd('${p.id}','cost',this.value)"></td>
+ <td><input type="number" value="${p.price}" onchange="upd('${p.id}','price',this.value)"></td>
+ <td><input type="number" value="${p.stock}" onchange="upd('${p.id}','stock',this.value)"></td>
+ <td><input type="number" value="${p.min}" onchange="upd('${p.id}','min',this.value)"></td>
+ <td>${fmt(p.stock*p.cost)}</td><td><button class="x" onclick="delProd('${p.id}')">حذف</button></td></tr>`))}
+ <p class="mut">جمع ارزش موجودی: ${fmt(sum(S.products,p=>p.stock*p.cost))} تومان · ردیف‌های زرد = موجودی کم</p></div>`;
+}
+function addProd(){
+ const n=$('p-n').value.trim();if(!n)return toast('نام کالا رو بنویس');
+ S.products.push({id:uid(),name:n,cost:+$('p-c').value||0,price:+$('p-p').value||0,stock:+$('p-s').value||0,min:+$('p-m').value||0});save();render();
+}
+function upd(id,k,v){const p=P(id);p[k]=+v||0;save();render()}
+function delProd(id){if(confirm('این کالا حذف بشه؟ (سوابق خرید و فروش می‌مونه)')){S.products=S.products.filter(p=>p.id!==id);save();render()}}
+
+function sup(){
+ const pl=S.payments.filter(inM);
+ return `<div class="card"><h2>افزودن فروشنده</h2><div class="row"><label>نام فروشنده<input id="f-n"></label><button class="b" onclick="addSup()">افزودن</button></div></div>
+ <div class="card"><h2>ثبت پرداخت به فروشنده</h2><div class="row">
+ <label>تاریخ<input type="text" id="y-d" inputmode="numeric" placeholder="۱۴۰۵/۰۸/۲۸" value="${pj(today)}"></label>
+ <label>فروشنده<select id="y-s"><option value="">انتخاب...</option>${opts(S.suppliers)}</select></label>
+ <label>مبلغ<input type="number" id="y-a"></label>
+ <label>توضیح<input id="y-t"></label>
+ <button class="b" onclick="addPay()">ثبت</button></div></div>
+ <div class="card"><h2>حساب فروشنده‌ها</h2>${tbl(['فروشنده','جمع خرید','پرداخت‌شده','مانده بدهی',''],S.suppliers.map(s=>{const b=sum(S.purchases.filter(x=>x.sid===s.id),x=>x.qty*x.cost),o=owed(s);return `<tr><td>${E(s.name)}</td><td>${fmt(b)}</td><td>${fmt(b-o)}</td><td class="${o>0?'neg':'pos'}">${fmt(o)}</td><td><button class="x" onclick="delSup('${s.id}')">حذف</button></td></tr>`}))}</div>
+ <div class="card"><h2>لیست پرداخت‌ها</h2>${tbl(['تاریخ','فروشنده','مبلغ','توضیح',''],[...pl].reverse().map(x=>`<tr><td>${jd(x.date)}</td><td>${E(x.sname)}</td><td>${fmt(x.amount)}</td><td>${E(x.note||'')}</td><td><button class="x" onclick="del('payments','${x.id}')">حذف</button></td></tr>`))}</div>`;
+}
+function addSup(){const n=$('f-n').value.trim();if(!n)return toast('نام فروشنده رو بنویس');S.suppliers.push({id:uid(),name:n});save();render()}
+function delSup(id){if(confirm('فروشنده حذف بشه؟')){S.suppliers=S.suppliers.filter(s=>s.id!==id);save();render()}}
+function addPay(){
+ const s=S.suppliers.find(x=>x.id===$('y-s').value),a=+$('y-a').value;
+ if(!s||!(a>0)||!gd('y-d'))return toast('تاریخ شمسی، فروشنده و مبلغ رو وارد کن');
+ S.payments.push({id:uid(),date:gd('y-d'),sid:s.id,sname:s.name,amount:a,note:$('y-t').value});save();render();toast('پرداخت ثبت شد');
+}
+
+function pl(){
+ const c=calc(),ex=S.expenses.filter(inM),byM={};
+ S.sales.forEach(x=>{const k=jm(x.date),m=byM[k]=byM[k]||{l:ml(x.date),r:0,c:0,e:0};m.r+=x.qty*x.price;m.c+=x.qty*x.cost});
+ S.expenses.forEach(x=>{const k=jm(x.date),m=byM[k]=byM[k]||{l:ml(x.date),r:0,c:0,e:0};m.e+=x.amount});
+ const ms=Object.entries(byM).sort((a,b)=>a[0]<b[0]?1:-1);
+ return `<div class="grid">${st('فروش',c.rev)}${st('بهای تمام‌شده',c.cogs)}${st('سود ناخالص',c.gross,cls(c.gross))}${st('هزینه‌ها',c.ex)}${st('سود / زیان خالص',c.net,cls(c.net))}</div>
+ <div class="card"><h2>ثبت هزینه (اجاره، حقوق، قبض، ...)</h2><div class="row">
+ <label>تاریخ<input type="text" id="e-d" inputmode="numeric" placeholder="۱۴۰۵/۰۸/۲۸" value="${pj(today)}"></label>
+ <label>عنوان<input id="e-t" placeholder="اجاره مغازه"></label>
+ <label>مبلغ<input type="number" id="e-a"></label>
+ <button class="b" onclick="addExp()">ثبت</button></div>
+ ${tbl(['تاریخ','عنوان','مبلغ',''],[...ex].reverse().map(x=>`<tr><td>${jd(x.date)}</td><td>${E(x.title)}</td><td>${fmt(x.amount)}</td><td><button class="x" onclick="del('expenses','${x.id}')">حذف</button></td></tr>`))}</div>
+ <div class="card"><h2>سود و زیان ماه به ماه</h2>${tbl(['ماه','فروش','سود ناخالص','هزینه','سود خالص'],ms.map(([k,m])=>{const n=m.r-m.c-m.e;return `<tr><td>${m.l}</td><td>${fmt(m.r)}</td><td>${fmt(m.r-m.c)}</td><td>${fmt(m.e)}</td><td class="${cls(n)}">${fmt(n)}</td></tr>`}))}</div>`;
+}
+function addExp(){
+ const t=$('e-t').value.trim(),a=+$('e-a').value;if(!t||!(a>0)||!gd('e-d'))return toast('تاریخ شمسی، عنوان و مبلغ رو وارد کن');
+ S.expenses.push({id:uid(),date:gd('e-d'),title:t,amount:a});save();render();
+}
+
+function del(k,id){
+ if(!confirm('حذف بشه؟'))return;
+ const r=S[k].find(x=>x.id===id);
+ if(k==='sales'){const p=P(r.pid);if(p)p.stock+=r.qty}
+ if(k==='purchases'){const p=P(r.pid);if(p)p.stock-=r.qty;S.payments=S.payments.filter(x=>x.bid!==id)}
+ S[k]=S[k].filter(x=>x.id!==id);save();render();
+}
+function exp(){
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='shop-backup-'+today+'.json';a.click();
+}
+function imp(i){
+ const f=i.files[0];if(!f)return;const r=new FileReader();
+ r.onload=()=>{try{S=Object.assign(S,JSON.parse(r.result));save();render();toast('بازیابی شد')}catch(e){toast('فایل معتبر نیست')}};r.readAsText(f);
+}
+function isDark(){const t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
+function paintTheme(){$('thm').textContent=isDark()?'☀️':'🌙'}
+function toggleTheme(){const n=isDark()?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('shop-theme',n)}catch(e){}paintTheme()}
+try{const t=localStorage.getItem('shop-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
+paintTheme();
+render();
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
